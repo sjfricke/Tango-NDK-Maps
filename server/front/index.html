@@ -1,12 +1,42 @@
 <html>
 <head>
     <title>Fricke Fresh</title>
+    <meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<style>
+	body {
+        color: #cccccc;
+        font-family:Monospace;
+        font-size:13px;
+        text-align:center;
+        background-color: #050505;
+        margin: 0px;
+        overflow: hidden;
+    }
+    #info {
+        position: absolute;
+        top: 0px; width: 100%;
+        padding: 5px;
+    }
+    a {
+        color: #0080ff;
+    }
+	</style>
 </head>
 <body>
-    <div id="mainDiv"></div>
+    
+    <div id="container"></div>
+    <div id="info"> //TODO - Add good title for hack </div>
+    
 </body>       
 
-    <script src="/socket.io/socket.io.js"></script>     
+    <script src="/socket.io/socket.io.js"></script>  
+    
+    <script src="library/three.min.js"></script>
+	<script src="library/TrackballControls.js"></script>
+	<script src="library/stats.min.js"></script>
+    
     <script src="javascript/main.js"></script>
+    <script src="javascript/socket.js"></script>
     
 </html>
