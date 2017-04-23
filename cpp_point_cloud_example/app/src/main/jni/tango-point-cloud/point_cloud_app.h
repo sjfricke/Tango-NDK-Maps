@@ -22,13 +22,15 @@
 #include <memory>
 #include <string>
 
+#include <iomanip> // setprecision
+#include <sstream> // stringstream
+
 #include <tango_client_api.h>  // NOLINT
 #include <tango-gl/util.h>
 #include <tango_support_api.h>
 
 #include <tango-point-cloud/scene.h>
 #include <tango-point-cloud/WebSocket.h>
-
 namespace tango_point_cloud {
 
 // PointCloudApp handles the application lifecycle and resources.

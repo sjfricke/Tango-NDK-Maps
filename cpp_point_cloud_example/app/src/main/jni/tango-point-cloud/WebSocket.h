@@ -13,7 +13,7 @@
 #include <errno.h>
 #include <thread> // std threads instead of pthreads due to c++ member function issues
 
-#define MAX_MESSAGE_BUFFER 1024
+#define MAX_MESSAGE_BUFFER 65536
 
 // function pointer array where the message is the passed in arg
 typedef void (*event_map_t)(char*);

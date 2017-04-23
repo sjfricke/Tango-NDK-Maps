@@ -304,7 +304,9 @@ void PointCloudApp::SetScreenRotation(int screen_rotation) {
 }
 
 void PointCloudApp::snapShot() {
-  float b;
+  int confirm;
+  int counter = 0;
+  std::string strMessage = "";
   // Get the latest point cloud
   TangoPointCloud* point_cloud = nullptr;
   TangoSupport_getLatestPointCloud(point_cloud_manager_, &point_cloud);
@@ -312,12 +314,41 @@ void PointCloudApp::snapShot() {
     return;
   }
 
-  for (size_t i = 0; i < point_cloud->num_points; i++) {
-    b = point_cloud->points[i][0];
-    b = point_cloud->points[i][1];
-    b = point_cloud->points[i][2];
-    b = point_cloud->points[i][3];
+  for (size_t i = 0; i < point_cloud->num_points ; i++) {
+
+    // the data is not that confidence and not worth sending
+    // need to cut data somewhere
+    if (point_cloud->points[i][3] < .98) {
+      continue;
+    }
+
+    if (counter > 1500) {
+      client_socket.broadcast(2, 0, strMessage);
+      strMessage = "";
+      counter = 0;
+    } else {
+      counter++;
+    }
+
+    std::stringstream stream;
+    stream << std::fixed << std::setprecision(5)
+            << point_cloud->points[i][0] << "/"
+            << point_cloud->points[i][1] << "/"
+            << point_cloud->points[i][2] << ",";
+    strMessage += stream.str();
+  } // for loop
+
+  strMessage.append("&");
+  confirm = client_socket.broadcast(3, 0, strMessage);
+
+  if (confirm != 0) {
+    LOGE("SOCKET: last string didnt send");
   }
-  client_socket.broadcast(1, 0, "red");
-}
+//  confirm = client_socket.broadcast(1, 0, "end");
+//
+//  if (confirm != 0) {
+//    LOGE("SOCKET: End didnt send");
+//  }
+
+} // sendSnap
 }  // namespace tango_point_cloud
