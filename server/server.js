@@ -19,12 +19,18 @@ app.use(bodyParser.json()); //parses json and sets to body
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'front'))); //sets all static file calls to folder
+app.use("/tango", express.static(path.join(__dirname, 'front')));
 
 
 //---------------API-------------------//
 
 app.get('/', function(req, res, next) {
   res.sendFile('index.html');
+});
+
+app.get('/tango', function(req, res, next) {
+    console.log(path.join(__dirname, 'front/index.html'));
+    res.sendFile(path.join(__dirname, 'front/index.html') );
 });
 
 app.get('/color/:color', function(req, res, next) {
@@ -38,9 +44,9 @@ app.get('/color/:color', function(req, res, next) {
 //-------------Socket IO -------------------//
 
 io.on('connection', function(socket){
-  console.log('a user connected');
+  console.log('Socket.io user connected');
   socket.on('disconnect', function(){
-    console.log('user disconnected');
+    console.log('Socket.io user disconnected');
   });
 });
     
@@ -156,10 +162,10 @@ var chunks = false;
 
 var net = require('net');
 var net_server = net.createServer( (connection) => {
-    console.log('client connected');
+    console.log('AndroidSocket client connected');
 
     connection.on('close', () => {
-	console.log('client disconnected');
+	console.log('AndroidSocket client disconnected');
     });
 
     connection.on('data', (data) =>  {
@@ -216,7 +222,7 @@ var net_server = net.createServer( (connection) => {
 		    net_vec.push( { "x" : x_f, "y" : y_f, "z" : z_f } );
 		}
 		console.log("pushed vecs " + net_vec.length);
-		console.dir(net_vec[0]);
+//		console.dir(net_vec[0]);
 		console.dir(net_vec[1]);
 		console.dir(net_vec[10]);
         
