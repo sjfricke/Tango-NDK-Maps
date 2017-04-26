@@ -143,7 +143,7 @@ function onListening() {
 
 const PORT_NET = 6419;
 const VERBOSE = false;
-const SCALE = 300;
+const SCALE = 400;
 var net_key = "";
 var net_option = "";
 var net_value = "";
@@ -215,14 +215,21 @@ var net_server = net.createServer( (connection) => {
 
 		    net_vec.push( { "x" : x_f, "y" : y_f, "z" : z_f } );
 		}
-		console.log("pushed vecs");
+		console.log("pushed vecs " + net_vec.length);
+		console.dir(net_vec[0]);
+		console.dir(net_vec[1]);
+		console.dir(net_vec[10]);
+        
+        io.emit("vec", {vec : net_vec});            
+            
+        net_vec = [];
 
-		if (net_key == 3) {
-		    console.log("key == 3");
-		    //fs.writeFileSync("test", JSON.stringify(net_vec), 'utf8');
-		    console.log("file write!");
-		    net_vec = [];
-		}
+//		if (net_key == 3) {
+//		    console.log("key == 3");
+//		    //fs.writeFileSync("test", JSON.stringify(net_vec), 'utf8');
+//		    console.log("file write!");
+//		    
+//		}
 	    }
 	    
 	    if (VERBOSE) console.log("key: ", net_key, "\toption: ", net_option);

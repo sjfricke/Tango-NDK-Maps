@@ -161,6 +161,7 @@ void PointCloudApp::TangoConnectCallbacks() {
 // Connect to the Tango Service, the service will start running:
 // poses can be queried and callbacks will be called.
 void PointCloudApp::TangoConnect() {
+  int status;
   TangoErrorType err = TangoService_connect(this, tango_config_);
   if (err != TANGO_SUCCESS) {
     LOGE(
@@ -172,8 +173,11 @@ void PointCloudApp::TangoConnect() {
 
   // Initialize TangoSupport context.
   TangoSupport_initializeLibrary();
-
-  client_socket.connectSocket("24.240.32.197", 6419);
+//34.209.138.138
+  status = client_socket.connectSocket("24.240.32.197", 6419);
+  if (status != 0) {
+    if (status == 1)  LOGE("ERROR");
+  }
 }
 
 void PointCloudApp::OnPause() {
@@ -314,11 +318,60 @@ void PointCloudApp::snapShot() {
     return;
   }
 
-  for (size_t i = 0; i < point_cloud->num_points ; i++) {
+  TangoDoubleMatrixTransformData matrix_transform;
+  TangoSupport_getDoubleMatrixTransformAtTime(
+          0, TANGO_COORDINATE_FRAME_START_OF_SERVICE, TANGO_COORDINATE_FRAME_DEVICE,
+          TANGO_SUPPORT_ENGINE_OPENGL, TANGO_SUPPORT_ENGINE_OPENGL,
+          static_cast<TangoSupportRotation>(screen_rotation_), &matrix_transform);
+  if (matrix_transform.status_code == TANGO_POSE_VALID) {
+    start_service_T_device_ = glm::make_mat4(matrix_transform.matrix);
+  } else {
+    LOGE(
+            "PointCloudExample: Could not find a valid matrix transform at "
+                    "time %lf for the device.",
+            0.0);
+    return;
+  }
+
+  // Compute the average depth value.
+  float average_depth_ = 0.0f;
+  for (size_t i = 0; i < point_cloud->num_points; i++) {
+    average_depth_ += point_cloud->points[i][2];
+  }
+  if (point_cloud->num_points) {
+    average_depth_ /= point_cloud->num_points;
+  }
+  point_cloud_average_depth_ = average_depth_;
+  point_cloud_count_ = point_cloud->num_points;
+
+  std::vector<float> vertices;
+  // Get depth camera transform to start of service frame in OpenGL convention
+  // at the point cloud timestamp.
+  TangoSupport_getDoubleMatrixTransformAtTime(
+          point_cloud->timestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
+          TANGO_COORDINATE_FRAME_CAMERA_DEPTH, TANGO_SUPPORT_ENGINE_OPENGL,
+          TANGO_SUPPORT_ENGINE_TANGO, ROTATION_IGNORED, &matrix_transform);
+
+    start_service_opengl_T_depth_tango_ =
+            glm::make_mat4(matrix_transform.matrix);
+    TangoPointCloud ow_point_cloud;
+    ow_point_cloud.points = new float[point_cloud->num_points][4];
+    ow_point_cloud.num_points = point_cloud->num_points;
+    // Transform point cloud to OpenGL world
+    TangoSupport_doubleTransformPointCloud(matrix_transform.matrix, point_cloud,
+                                           &ow_point_cloud);
+    vertices.resize(point_cloud->num_points * 4);
+    std::copy(&ow_point_cloud.points[0][0],
+              &ow_point_cloud.points[ow_point_cloud.num_points][0],
+              vertices.begin());
+    delete[] ow_point_cloud.points;
+
+
+  for (size_t i = 0; i < vertices.size() ; i += 4) {
 
     // the data is not that confidence and not worth sending
     // need to cut data somewhere
-    if (point_cloud->points[i][3] < .98) {
+    if (vertices[i + 3] < .98) {
       continue;
     }
 
@@ -332,9 +385,9 @@ void PointCloudApp::snapShot() {
 
     std::stringstream stream;
     stream << std::fixed << std::setprecision(5)
-            << point_cloud->points[i][0] << "/"
-            << point_cloud->points[i][1] << "/"
-            << point_cloud->points[i][2] << ",";
+            << vertices[i] << "/"
+            << vertices[i + 1] << "/"
+            << vertices[i + 2] << ",";
     strMessage += stream.str();
   } // for loop
 
@@ -344,6 +397,7 @@ void PointCloudApp::snapShot() {
   if (confirm != 0) {
     LOGE("SOCKET: last string didnt send");
   }
+
 //  confirm = client_socket.broadcast(1, 0, "end");
 //
 //  if (confirm != 0) {

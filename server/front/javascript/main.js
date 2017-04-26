@@ -17,13 +17,13 @@ function init() {
     scene.fog = new THREE.Fog( 0x050505, 2000, 3500 );
     
     
-    addParticles(
-        {
-            particles : 500000,
-            color : { r : 1, g : 0, b : 0 },
-            size : 1
-        }
-    );
+//    addParticles(
+//        {
+//            particles : 500000,
+//            color : { r : 1, g : 0, b : 0 },
+//            size : 1
+//        }
+//    );
         
     // Render Setup
     renderer = new THREE.WebGLRenderer( { antialias: false } );
@@ -98,3 +98,38 @@ function addParticles(data) {
     points = new THREE.Points( geometry, material );
     scene.add( points );
 }
+
+var socket = io();
+
+socket.on('color', function(data){
+    document.body.style.background = data.color; 
+});
+
+socket.on('vec', function(data){
+    console.log(data.vec.length);
+    var particles = data.vec.length;
+    var geometry = new THREE.BufferGeometry();
+    var positions = new Float32Array( particles * 3 );
+    var colors = new Float32Array( particles * 3 );
+    var color = new THREE.Color();
+    
+    for ( var i = 0; i < data.vec.length; i += 3 ) {
+        // positions
+        positions[ i ]     = data.vec[i].x;
+        positions[ i + 1 ] = data.vec[i].y;
+        positions[ i + 2 ] = data.vec[i].z;
+        // colors        
+        colors[ i ]     = 1;
+        colors[ i + 1 ] = 0;
+        colors[ i + 2 ] = 0;
+    }    
+    
+    geometry.addAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
+    geometry.addAttribute( 'color', new THREE.BufferAttribute( colors, 3 ) );
+    geometry.computeBoundingSphere();
+    
+    
+    var material = new THREE.PointsMaterial( { size: 1, vertexColors: THREE.VertexColors } );
+    points = new THREE.Points( geometry, material );
+    scene.add( points );
+});
